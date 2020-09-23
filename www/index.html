@@ -1,0 +1,185 @@
+<html>
+<head>
+		<title>Chat Service</title>
+
+		<script src="scripts/jquery.js"></script>
+		<script src="scripts/socket.io.js"></script>
+		<style>
+		*{
+			margin: 0;
+			padding: 0px;
+			box-sizing: border-box;
+		}
+		.wrapper{
+			width: 50%;
+			height: 400px;
+			margin: auto;
+		}
+		h1{
+			background-color: #0487D9;
+			color: #fff;
+			width: 100%;
+			height: auto;
+			padding: 1rem;
+			float: left;
+			text-align: center;
+		}
+			.userContainer {
+			float: left;
+			width: 20%;
+			height: 400px;
+			padding: 10px;
+			overflow: auto;
+      background-color:#f2f2f2;
+			}
+			.conversationContainer {
+			float: left;
+			width: 80%;
+			height: 400px;
+			margin: auto;
+			}
+			#conversationHolder{
+			float: top;
+			width: 100%;
+			height: 350px;
+			overflow-y: scroll;
+			padding: 10px;
+			position:static;
+			}
+			#data {
+			width: 60%;
+			height: 40px;
+			margin-left: 10px;
+			padding: 1rem;
+			border-radius: 5px;
+			border: 1px solid #0487D9;
+			}
+			#datasend{
+				padding: 0.7rem 1.5rem;
+				border: none;
+				background-color: #0487D9;
+				color: #fff;
+				border-radius: 5px;
+				margin: 0px 15px;
+			}
+			.msg{
+				padding: 1rem;
+				margin: 0.5rem;
+				background-color: #D5E5F2;
+				border-radius: 25px;
+			}
+			.users{
+				padding: 2px;
+				margin: 0.5rem;
+				background-color: #A5E5F2;
+				border-radius: 5px;
+			}
+
+
+		</style>
+</head>
+
+
+<body>
+	<marquee behavior="scroll" direction="left">This Simple Chat app created by Mahfozur Rahman, ESAD-CS R-42, ID:1251275 </marquee>
+	<section class="wrapper">
+		<h1>Chat Application</h1>
+		<div class="userContainer" >
+			<h4>Connected Users:</h4>
+			<div id="users"></div>
+		</div>
+			<div class="conversationContainer">
+
+				<div id="conversationHolder">
+					<div id="conversation"></div>
+				</div>
+				
+				<div id="tools" >
+						<input id="data" placeholder="Enter your message here..." />
+						<input type="button" id="datasend" value="send" />
+						<label  class="btn btn-info btn-file" id='btnImageFile' style="position:absolute; margin:5px; margin-top:7px; padding:3px;" >
+								<img src="1.png" style="height:8px;width:25px;">Attachment<input type="file" style="display:none" />
+						</label>
+
+				</div>
+			</div>
+	</section>
+
+
+
+	<script type="text/javascript">
+		var socket;
+		$(document).ready(function () {
+		socket = io.connect('http://localhost:8080');
+		socket.on('connect', addUser);
+		socket.on('updatechat', processMessage);
+		socket.on('addimage',processImage );
+		socket.on('updateusers', updateUserList);
+			$('#datasend').click(sendMessage);
+			$('#data').keypress(processEnterPress);
+
+
+
+			$('#btnImageFile').on('change', function (e)
+									{
+									var file = e.originalEvent.target.files[0];
+									var reader = new FileReader();
+									reader.onload = function (evt) {
+											socket.emit('userImage', evt.target.result);
+									};
+									reader.readAsDataURL(file);})
+
+			$('#data').focus();
+
+		});
+		function addUser() {
+		socket.emit('adduser', prompt("What's your name?"));
+		}
+		function processMessage(username, data) {
+		//$('<b>' + username + ':</b> ' + data + '<br />')
+		//.insertAfter($('#conversation'));
+		$('#conversation').append('<div class="msg"><b>' + username + ': </b>' + data + '</div>');
+		}
+		function updateUserList(data) {
+		$('#users').empty();
+		$.each(data, function (key, value) {
+		$('#users').append('<div class="users">' + key + '</div>');
+		});
+		}
+		function sendMessage() {
+		var message = $('#data').val();
+		$('#data').val('');
+		socket.emit('sendchat', message);
+		$('#data').focus();
+		scrolBottom()
+		}
+		function processEnterPress(e) {
+		if (e.which == 13) 
+			{
+		e.preventDefault();
+		$(this).blur();
+		$('#datasend').focus().click();
+		scrolBottom()
+			}
+		}
+
+							//upload Picture
+
+
+		function processImage(username, myImage, myFile) {
+							$('#conversation').append('<br/><b>' + username + ': </b>' + '<a target="_blank" href="' + myImage + '"><img width="200" height="200" style="border-radius:10px" src="' + myImage + '" /></a><br/>');
+					}
+
+		function scrolBottom(){
+		var element = document.getElementById("conversationHolder");
+			element.scrollTop = element.scrollHeight;
+			
+		}
+
+		
+
+
+
+	</script>
+</body>
+</html>
